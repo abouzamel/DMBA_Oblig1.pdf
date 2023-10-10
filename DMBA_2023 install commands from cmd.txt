@@ -1,0 +1,15 @@
+cd E:\Projects_H2023\DMBA_2023
+python -m venv DataMining_BA_2023
+.\DataMining_BA_2023\Scripts\activate
+
+python.exe -m pip install --upgrade pip
+pip install -r requirements.txt
+
+
+Python -m ipykernel install --name=DataMining_BA_2023
+
+### Jupyter kernelspec uninstall DataMining_BA_2023 (if needed)
+
+
+
+jupyter lab

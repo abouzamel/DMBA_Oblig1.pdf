@@ -1,0 +1,10 @@
+ipykernel
+numpy
+requests
+pandas
+matplotlib
+seaborn
+plotnine
+pyarrow
+
+

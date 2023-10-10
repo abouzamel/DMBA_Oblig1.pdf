@@ -1,0 +1,136 @@
+---
+output: html_document
+editor_options: 
+  chunk_output_type: inline
+---
+```{r}
+#install.packages("arrow")
+library(arrow)
+#install.packages("ggplot2")
+library(ggplot2)
+
+library(dplyr) # to use the %>% operator
+```
+
+
+```{r}
+parquet_data <- read_parquet("combined_data_parquet_file_onemin_Ground_2015.parquet")
+
+```
+
+
+```{r}
+df = parquet_data
+column_names <- colnames(df)
+print(column_names)
+```
+
+A) Et pyranometer måler innstrålingen av sol som et gitt antall Watt pr. kvadratmeter.
+Velg en tilfeldig uke på sommeren 2015, og plott tidsstempel på X-aksen, og verdien til “Pyra1_Wm2_Avg” på Y-aksen.
+
+
+
+```{r}
+
+# Filter the data for the specified date range
+random_week_df <- df[df$TIMESTAMP >= as.Date("2015-07-06") & df$TIMESTAMP <= as.Date("2015-07-12"), ]
+
+# Create a scatter plot using ggplot2
+ggplot(random_week_df, aes(x = TIMESTAMP, y = Pyra1_Wm2_Avg)) +
+  geom_point() +
+  labs(x = "A week timestamp", y = "Pyra1_Wm2_Avg") +
+  ggtitle("Random Week in Summer 2015 - Pyra1_Wm2_Avg")
+
+```
+
+
+B) “InvPDC_kW_Avg” er gjennomsnittlig effekt produsert av solcelleanlegget pr. minutt.
+Legg til denne verdien på Y-aksen.
+
+
+```{r}
+ggplot(random_week_df, aes(x = TIMESTAMP, y = InvPDC_kW_Avg)) +
+  geom_point() +
+  labs(x = "A week Timestamp", y = "InvPDC_kW_Avg") +
+  ggtitle("Random Week in Summer 2015 - gjennomsnittlig effekt produsert av solcelleanlegget pr. minutt")
+```
+
+C) Er “Pyra1_Wm2_Avg” og “InvPDC_kW_Avg” avhengige eller uavhengige variabler?
+Beregn Pearson Correlation mellom de to variablene. Begrunn svaret ditt. Hva tenker
+du om årsak og virkning?
+
+
+```{r}
+# To fix the "Pearson Correlation: NA" result, we need to remove rows with missing values  in either column
+# As suggested by the lecturer, we need to filter the negative values from the datasett
+
+df_clean <- na.omit(df[c("Pyra1_Wm2_Avg", "InvPDC_kW_Avg")]) %>%
+  filter(Pyra1_Wm2_Avg >=0.0,InvPDC_kW_Avg >=0.0 )
+```
+```{r}
+# Calculate Pearson correlation
+correlation <- cor(df_clean$Pyra1_Wm2_Avg, df_clean$InvPDC_kW_Avg)
+
+correlation2 <- cor(df_clean$InvPDC_kW_Avg, df_clean$Pyra1_Wm2_Avg)
+
+# round the result for five digits after the decimal point
+formatted_correlation <- sprintf("%.5f", correlation)
+formatted_correlation2 <- sprintf("%.5f", correlation2)
+
+# Print the correlation coefficient
+print(paste("Pearson Correlation between “Pyra1_Wm2_Avg” and “InvPDC_kW_Avg”:", formatted_correlation))
+print(paste("Pearson Correlation between “InvPDC_kW_Avg” and “Pyra1_Wm2_Avg”:", formatted_correlation2))
+
+```
+Answer C:
+The Pearson Correlation between “Pyra1_Wm2_Avg” and “InvPDC_kW_Avg” variables is high "91%". There is linear relationship between them, thus there is causation. We can conclude that there is "correlation". Every variable is dependent variable which means that any change in one variable affects the secound one.
+
+
+
+
+```{r}
+
+```
+
+D) Plott sammenhengen mellom de to variablene (scatterplot), med “InvPDC_kW_Avg”
+på X-aksen, “Pyra1_Wm2_Avg” på Y-aksen.
+
+
+
+```{r}
+ggplot(df_clean, aes(x = InvPDC_kW_Avg, y = Pyra1_Wm2_Avg)) +
+  geom_point() +
+  labs(x = "InvPDC_kW_Avg", y = "Pyra1_Wm2_Avg") +
+  ggtitle("Relationship between InvPDC_kW_Avg and Pyra1_Wm2_Avg")
+
+```
+
+
+E) Estimer parametrene til en lineær regresjonsmodell med kun data fra 2015 hvor:
+InvPDC_kW_Avg = ⍺ + 𝛃*Pyra1_Wm2_Avg + 𝛜
+Vi antar at 𝛜 er i.i.d. normalt distribuert. Hvor stor andel av variansen i
+“InvPDC_kW_Avg” gjør vi rede for med “Pyra1_Wm2_Avg”? Er dette en god modell?
+Finn et 95% konfidensintervall for 𝛃. Forklar hva det betyr at 𝛃 har dette
+konfidensintervallet.
+```{r}
+
+
+df_2015 <- df[df$TIMESTAMP >= as.Date("2015-01-01") & df$TIMESTAMP <= as.Date("2015-12-31"), ]%>%
+  filter(InvPDC_kW_Avg >=0.0,Pyra1_Wm2_Avg >=0.0 )
+
+y <- df_2015$InvPDC_kW_Avg
+x <- df_2015$Pyra1_Wm2_Avg
+linear_model <- lm(y~x)
+
+```
+
+```{r}
+summary(linear_model)
+```
+```{r}
+rsquared <- summary(linear_model)$r.squared
+conf_int <- confint(linear_model, level = 0.95)
+
+```
+
+
